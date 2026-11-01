@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roster — Student Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1B18;
+    --paper:#F2F0E6;
+    --paper-2:#E8E4D6;
+    --navy:#1F2A44;
+    --navy-2:#2C3B5C;
+    --amber:#E8A33D;
+    --teal:#3E6259;
+    --line:#C9C3AE;
+    --card-shadow: 0 1px 0 rgba(27,27,24,.05), 0 8px 24px rgba(31,42,68,.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(27,27,24,.06) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px;}
+
+  /* ---- Header ---- */
+  header.top{
+    padding:40px 24px 28px;
+    border-bottom:2px solid var(--ink);
+    background:var(--paper);
+    position:sticky;top:0;z-index:20;
+  }
+  header.top .inner{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;}
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);font-weight:600;margin-bottom:6px;
+  }
+  .brand-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(30px,4vw,44px);
+    line-height:1.02;
+    margin:0;
+  }
+  .brand-title em{font-style:italic;color:var(--navy);}
+
+  nav.tabs{display:flex;gap:8px;}
+  .tab-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;letter-spacing:.04em;
+    padding:10px 18px;
+    background:transparent;
+    border:2px solid var(--ink);
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:2px;
+    transition:.15s ease;
+  }
+  .tab-btn.active{background:var(--ink);color:var(--paper);}
+  .tab-btn:hover:not(.active){background:var(--paper-2);}
+
+  section{display:none;}
+  section.active{display:block;}
+
+  /* ---- Home / roster ---- */
+  .roster-meta{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin:32px 0 20px;flex-wrap:wrap;gap:10px;
+  }
+  .roster-count{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--navy-2);}
+  .search-box{
+    font-family:'Inter',sans-serif;
+    padding:9px 14px;border:2px solid var(--ink);border-radius:2px;
+    background:#fff;min-width:220px;font-size:14px;
+  }
+
+  .grid{
+    display:flex;
+    flex-direction:column;
+    border:2px solid var(--ink);
+    border-radius:4px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:var(--card-shadow);
+  }
+
+  /* ---- Home layout: sidebar + grid ---- */
+  .home-layout{
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+  }
+  .group-sidebar{
+    flex:none;
+    width:220px;
+    position:sticky;
+    top:130px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .group-sidebar::-webkit-scrollbar{width:4px;}
+  .group-sidebar::-webkit-scrollbar-track{background:transparent;}
+  .group-sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  .group-sidebar::-webkit-scrollbar-thumb:hover{background:var(--navy-2);}
+  .group-sidebar-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--navy-2);margin:0 0 4px 2px;font-weight:600;
+  }
+  .group-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;text-align:left;
+    padding:9px 12px;
+    background:#fff;
+    border:1.5px solid var(--line);
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:3px;
+    transition:.15s ease;
+  }
+  .group-btn:hover{background:var(--paper-2);}
+  .group-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .home-content{flex:1;min-width:0;}
+
+  .toolbar{display:flex;gap:8px;align-items:center;}
+  .filter-btn,.sheet,.sheet-overlay{display:none;}
+
+  /* ---- Bottom sheet filter (mobile) ---- */
+  .sheet-chip{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;
+    min-width:44px;height:40px;padding:0 12px;
+    background:#fff;border:1.5px solid var(--line);color:var(--ink);
+    border-radius:20px;cursor:pointer;
+  }
+  .sheet-chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .sheet-row{padding:10px 0;border-top:1px solid var(--line);}
+  .sheet-row:first-child{border-top:none;padding-top:0;}
+  .sheet-name{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--navy-2);font-weight:600;margin-bottom:8px;}
+  .sheet-chips{display:flex;flex-wrap:wrap;gap:8px;}
+
+  @media (max-width: 720px){
+    .wrap{padding:0 14px 60px;}
+    header.top{position:static;padding:18px 14px 14px;}
+    header.top .inner{align-items:center;gap:12px;}
+    .brand-eyebrow{font-size:10px;margin-bottom:4px;}
+    .brand-title{font-size:28px;}
+    .tab-btn{padding:8px 12px;font-size:12px;}
+
+    .roster-meta{
+      display:block;margin:0 -14px 14px;padding:12px 14px;
+      position:sticky;top:0;z-index:15;
+      background:var(--paper);border-bottom:2px solid var(--ink);
+    }
+    .roster-count{display:block;margin-bottom:8px;font-size:12px;}
+    .toolbar{width:100%;}
+    .search-box{flex:1;min-width:0;height:44px;font-size:16px;}
+    .filter-btn{
+      display:inline-flex;align-items:center;gap:6px;flex:none;max-width:45%;
+      height:44px;padding:0 12px;
+      font-family:'IBM Plex Mono',monospace;font-size:13px;
+      background:#fff;border:2px solid var(--ink);border-radius:2px;color:var(--ink);cursor:pointer;
+    }
+    .filter-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .filter-btn.on{background:var(--ink);color:var(--paper);}
+
+    .group-sidebar{display:none;}
+    .home-layout{display:block;}
+
+    .grid{border:none;background:transparent;box-shadow:none;gap:12px;overflow:visible;}
+    .card{
+      border:2px solid var(--ink);border-radius:10px;
+      padding:14px;gap:12px;box-shadow:var(--card-shadow);
+    }
+    .card:last-child{border-bottom:2px solid var(--ink);}
+    .card-main{flex:1 1 0;}
+    .card-name{font-size:18px;margin-bottom:6px;}
+    .card-batch{margin:0 4px 4px 0 !important;}
+    .card-links{flex:1 1 100%;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px;}
+    .social-btn{justify-content:center;min-height:44px;font-size:14px;padding:10px;border-radius:10px;}
+    .social-btn svg{width:18px;height:18px;}
+    .card-links:has(.social-btn:nth-child(3)){gap:6px;}
+    .card-links:has(.social-btn:nth-child(3)) .social-btn{font-size:12.5px;padding:10px 6px;gap:5px;}
+    .card-links:has(.social-btn:nth-child(3)) .social-btn svg{width:16px;height:16px;}
+
+    .sheet-overlay{
+      display:block;position:fixed;inset:0;z-index:40;
+      background:rgba(27,27,24,.5);opacity:0;visibility:hidden;
+      transition:opacity .2s ease,visibility .2s;
+    }
+    .sheet{
+      display:block;position:fixed;left:0;right:0;bottom:0;z-index:41;
+      background:var(--paper);border-top:2px solid var(--ink);
+      border-radius:18px 18px 0 0;padding:10px 16px calc(16px + env(safe-area-inset-bottom));
+      transform:translateY(100%);visibility:hidden;
+      transition:transform .25s ease,visibility .25s;
+      max-height:80vh;
+    }
+    .sheet-handle{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px;}
+    .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .sheet-title{font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0;}
+    .sheet-close{
+      font-family:'IBM Plex Mono',monospace;font-size:13px;height:40px;padding:0 12px;
+      background:transparent;border:2px solid var(--ink);border-radius:2px;color:var(--ink);cursor:pointer;
+    }
+    .sheet-body{max-height:calc(80vh - 110px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    body.sheet-open{overflow:hidden;}
+    body.sheet-open .sheet-overlay{opacity:1;visibility:visible;}
+    body.sheet-open .sheet{transform:translateY(0);visibility:visible;}
+  }
+
+  .card{
+    background:#fff;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px 24px;
+    padding:16px 20px;
+    border-bottom:1.5px solid var(--line);
+    transition:background .15s ease;
+  }
+  .card:last-child{border-bottom:none;}
+  .card:hover{background:var(--paper-2);}
+
+  .card-avatar{
+    flex:none;
+    width:42px;height:42px;border-radius:50%;
+    background:var(--navy);color:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:16px;
+  }
+
+  .card-main{flex:1 1 200px;min-width:0;}
+  .card-name{
+    font-family:'Fraunces',serif;font-weight:600;font-size:17px;
+    margin:0 0 4px;line-height:1.15;
+  }
+  .card-batch{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;
+    background:var(--amber);color:var(--ink);
+    padding:3px 9px;border-radius:20px;border:1.5px solid var(--ink);
+  }
+  .card-links{display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px;flex:1 1 260px;align-items:center;}
+  .social-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;
+    text-decoration:none;color:var(--paper);
+    padding:6px 12px 6px 9px;border-radius:20px;
+    border:1.5px solid var(--ink);
+    box-shadow:2px 2px 0 var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    white-space:nowrap;
+  }
+  .social-btn:hover{
+    transform:translate(-1px,-1px);
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .social-btn:active{
+    transform:translate(1px,1px);
+    box-shadow:0 0 0 var(--ink);
+  }
+  .social-btn svg{width:14px;height:14px;flex:none;}
+  .social-btn.ig{
+    background:linear-gradient(135deg,#4f5bd5,#962fbf 30%,#d62976 55%,#fa7e1e 78%,#feda75);
+  }
+  .social-btn.li{
+    background:#0A66C2;
+  }
+  .social-btn.pf{
+    background:var(--teal);
+  }
+  .ico{width:15px;height:15px;flex:none;opacity:.75;}
+  .empty-state{
+    grid-column:1/-1;text-align:center;padding:60px 20px;
+    font-family:'IBM Plex Mono',monospace;color:var(--navy-2);
+    border:2px dashed var(--line);border-radius:4px;
+  }
+
+  /* ---- Form / daftar ---- */
+  .form-shell{
+    max-width:560px;margin:36px auto 0;
+    background:#fff;border:2px solid var(--ink);border-radius:4px;
+    box-shadow:var(--card-shadow);
+    padding:32px 28px 30px;
+  }
+  .form-title{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin:0 0 4px;}
+  .form-sub{font-size:13px;color:var(--navy-2);margin:0 0 26px;}
+
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:6px;font-weight:600;
+  }
+  .field small.hint{
+    display:block;font-family:'Inter',sans-serif;font-size:11.5px;
+    color:#8a8577;margin-top:4px;text-transform:none;letter-spacing:0;
+  }
+  .field input[type=text],.field input[type=email],.field input[type=tel],.field input[type=url],.field select{
+    width:100%;padding:11px 12px;border:1.5px solid var(--line);
+    border-radius:3px;font-size:14px;font-family:'Inter',sans-serif;
+    background:var(--paper);
+  }
+  .field select{appearance:auto;cursor:pointer;}
+  .field input:focus,.field select:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:var(--navy);}
+  .field input.invalid,.field select.invalid{border-color:#a13d2f;background:#fbf1ef;}
+  .field-error{
+    display:none;
+    font-family:'Inter',sans-serif;font-size:11.5px;
+    color:#a13d2f;margin-top:5px;
+  }
+  .field-error.show{display:block;}
+
+  .submit-btn{
+    width:100%;margin-top:6px;
+    background:var(--ink);color:var(--paper);
+    border:none;padding:14px;border-radius:3px;
+    font-family:'IBM Plex Mono',monospace;font-size:13.5px;letter-spacing:.06em;
+    text-transform:uppercase;cursor:pointer;
+  }
+  .submit-btn:hover{background:var(--navy);}
+  .submit-btn:disabled{opacity:.5;cursor:default;}
+
+  .status-msg{
+    margin-top:14px;font-size:13px;font-family:'IBM Plex Mono',monospace;
+    padding:10px 12px;border-radius:3px;display:none;
+  }
+  .status-msg.ok{display:block;background:#e5f0e6;color:var(--teal);border:1px solid var(--teal);}
+  .status-msg.err{display:block;background:#f5e2e0;color:#a13d2f;border:1px solid #a13d2f;}
+
+  footer{
+    text-align:center;padding:34px 0 10px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a29c8a;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <div>
+      <div class="brand-eyebrow">Data Instagram dan Linkedin</div>
+      <h1 class="brand-title">Student <em>Batch 35</em></h1>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="daftar">Isi Data Anda Disini</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============= HOME ============= -->
+  <section id="home" class="active">
+    <div class="roster-meta">
+      <span class="roster-count" id="rosterCount">Memuat data…</span>
+      <div class="toolbar">
+        <input class="search-box" id="searchBox" type="text" placeholder="Cari nama atau batch…">
+        <button type="button" class="filter-btn" id="filterBtn" aria-haspopup="dialog">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+          <span id="filterLabel">Filter</span>
+        </button>
+      </div>
+    </div>
+    <div class="home-layout">
+      <aside class="group-sidebar" id="groupSidebar">
+        <div class="group-sidebar-title">Small Group</div>
+        <button class="group-btn active" data-group="">Semua</button>
+        <!-- tombol Small Group lain akan ditambahkan otomatis oleh JS -->
+      </aside>
+      <div class="home-content">
+        <div class="grid" id="grid">
+          <div class="empty-state">Memuat data student…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FORM ============ -->
+  <section id="daftar">
+    <div class="form-shell">
+      <h2 class="form-title">Isi Data</h2>
+      <p class="form-sub">Silahkan isi Data ini. Data akan otomatis muncul di halaman Home.</p>
+
+      <form id="studentForm">
+        <div class="field">
+          <label>Nama Lengkap *</label>
+          <input type="text" id="nama" required placeholder="cth. Sarah Amelia">
+        </div>
+
+        <div class="field">
+          <label>Batch *</label>
+          <input type="text" id="batch" required placeholder="cth. Batch 12">
+        </div>
+
+        <div class="field">
+          <label>Small Group Berapa? *</label>
+          <select id="smallGroup" required>
+            <option value="">— Pilih Small Group —</option>
+            <!-- ====================================================
+                 
+                 ==================================================== -->
+            <option value="Small Group - Mel 1">Small Group - Mel 1</option>
+            <option value="Small Group - Mel 2">Small Group - Mel 2</option>
+            <option value="Small Group - Mel 3">Small Group - Mel 3</option>
+            <option value="Small Group - Mel 4">Small Group - Mel 4</option>
+            <option value="Small Group - Mel 5">Small Group - Mel 5</option>
+            <option value="Small Group - Meirizka 1">Small Group - Meirizka 1</option>
+            <option value="Small Group - Meirizka 2">Small Group - Meirizka 2</option>
+            <option value="Small Group - Meirizka 3">Small Group - Meirizka 3</option>
+            <option value="Small Group - Meirizka 4">Small Group - Meirizka 4</option>
+            <option value="Small Group - Meirizka 5">Small Group - Meirizka 5</option>
+            <option value="Small Group - Meirizka 6">Small Group - Meirizka 6</option>
+            <option value="Small Group - Meirizka 7">Small Group - Meirizka 7</option>
+            <option value="Small Group - Meirizka 8">Small Group - Meirizka 8</option>
+            <option value="Small Group - Meirizka 9">Small Group - Meirizka 9</option>
+            <option value="Small Group - Eko 1">Small Group - Eko 1</option>
+            <option value="Small Group - Eko 2">Small Group - Eko 2</option>
+            <option value="Small Group - Eko 3">Small Group - Eko 3</option>
+            <option value="Small Group - Eko 4">Small Group - Eko 4</option>
+            <option value="Small Group - Eko 5">Small Group - Eko 5</option>
+            <option value="Small Group - Eko 6">Small Group - Eko 6</option>
+            <option value="Small Group - Eko 7">Small Group - Eko 7</option>
+            <option value="Small Group - Eko 8">Small Group - Eko 8</option>
+            <option value="Small Group - Eko 9">Small Group - Eko 9</option>
+            <option value="Small Group - Imelda 1">Small Group - Imelda 1</option>
+            <option value="Small Group - Imelda 2">Small Group - Imelda 2</option>
+            <option value="Small Group - Imelda 3">Small Group - Imelda 3</option>
+            <option value="Small Group - Imelda 4">Small Group - Imelda 4</option>
+            <option value="Small Group - Katarina 1">Small Group - Katarina 1</option>
+            <option value="Small Group - Katarina 2">Small Group - Katarina 2</option>
+            <option value="Small Group - Katarina 3">Small Group - Katarina 3</option>
+            <option value="Small Group - Katarina 4">Small Group - Katarina 4</option>
+            <option value="Small Group - Richard 1">Small Group - Richard 1</option>
+            <option value="Small Group - Richard 2">Small Group - Richard 2</option>
+            <option value="Small Group - Richard 3">Small Group - Richard 3</option>
+            <option value="Small Group - Richard 4">Small Group - Richard 4</option>
+            <option value="Small Group - Yeremia 1">Small Group - Yeremia 1</option>
+            <option value="Small Group - Yeremia 2">Small Group - Yeremia 2</option>
+            <option value="Small Group - Yeremia 3">Small Group - Yeremia 3</option>
+            <option value="Small Group - Yeremia 4">Small Group - Yeremia 4</option>
+            <option value="Small Group - Nina 1">Small Group - Nina 1</option>
+            <option value="Small Group - Nina 2">Small Group - Nina 2</option>
+            <option value="Small Group - Nina 3">Small Group - Nina 3</option>
+            <option value="Small Group - Nina 4">Small Group - Nina 4</option>
+            <option value="Small Group - Esti 1">Small Group - Esti 1</option>
+            <option value="Small Group - Esti 2">Small Group - Esti 2</option>
+            <option value="Small Group - Esti 3">Small Group - Esti 3</option>
+            <option value="Small Group - Esti 4">Small Group - Esti 4</option>
+            <option value="Small Group - Mutiah 1">Small Group - Mutiah 1</option>
+            <option value="Small Group - Mutiah 2">Small Group - Mutiah 2</option>
+            <option value="Small Group - Mutiah 3">Small Group - Mutiah 3</option>
+            <option value="Small Group - Mutiah 4">Small Group - Mutiah 4</option>
+            <option value="Small Group - Janice 1">Small Group - Janice 1</option>
+            <option value="Small Group - Janice 2">Small Group - Janice 2</option>
+            <option value="Small Group - Janice 3">Small Group - Janice 3</option>
+            <option value="Small Group - Janice 4">Small Group - Janice 4</option>
+            <option value="Small Group - Tutu 1">Small Group - Tutu 1</option>
+            <option value="Small Group - Tutu 2">Small Group - Tutu 2</option>
+            <option value="Small Group - Tutu 3">Small Group - Tutu 3</option>
+            <option value="Small Group - Tutu 4">Small Group - Tutu 4</option>
+            <option value="Small Group - Nadia 1">Small Group - Nadia 1</option>
+            <option value="Small Group - Nadia 2">Small Group - Nadia 2</option>
+            <option value="Small Group - Nadia 3">Small Group - Nadia 3</option>
+            <option value="Small Group - Nadia 4">Small Group - Nadia 4</option>
+            <option value="Small Group - Dewi 1">Small Group - Dewi 1</option>
+            <option value="Small Group - Dewi 2">Small Group - Dewi 2</option>
+            <option value="Small Group - Dewi 3">Small Group - Dewi 3</option>
+            <option value="Small Group - Dewi 4">Small Group - Dewi 4</option>
+            <option value="Small Group - April 1">Small Group - April 1</option>
+            <option value="Small Group - April 2">Small Group - April 2</option>
+            <option value="Small Group - April 3">Small Group - April 3</option>
+            <option value="Small Group - April 4">Small Group - April 4</option>
+            <option value="Small Group - Alfred 1">Small Group - Alfred 1</option>
+            <option value="Small Group - Alfred 2">Small Group - Alfred 2</option>
+            <option value="Small Group - Alfred 3">Small Group - Alfred 3</option>
+            <option value="Small Group - Alfred 4">Small Group - Alfred 4</option>
+            <option value="Small Group - Jauhar 1">Small Group - Jauhar 1</option>
+            <option value="Small Group - Jauhar 2">Small Group - Jauhar 2</option>
+            <option value="Small Group - Jauhar 3">Small Group - Jauhar 3</option>
+            <option value="Small Group - Jauhar 4">Small Group - Jauhar 4</option>                    
+          </select>
+          <!-- <small class="hint" style="color:#c0392b;font-weight:600;">SMALL GROUP WAJIB DI ISI !!!, Tanyakan SA Anda jika belum tahu Small Group Berapa</small> -->
+          <small class="field-error" id="smallGroupError">SMALL GROUP WAJIB DI ISI !!!, Tanyakan PM/SA Anda jika belum tahu Small Group Berapa</small>
+        </div>
+
+        <div class="field">
+          <label>Link Instagram</label>
+          <input type="url" id="instagram" placeholder="https://instagram.com/username">
+          <small class="hint">Format harus: https://instagram.com/username</small>
+          <small class="field-error" id="instagramError">Link Instagram tidak valid. Contoh yang benar: https://instagram.com/username</small>
+        </div>
+
+        <div class="field">
+          <label>Link LinkedIn</label>
+          <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username">
+          <small class="hint">Format harus: https://linkedin.com/in/username</small>
+          <small class="field-error" id="linkedinError">Link LinkedIn tidak valid. Contoh yang benar: https://linkedin.com/in/username</small>
+        </div>
+
+        <div class="field">
+          <label>Link Portfolio</label>
+          <input type="url" id="portfolio" placeholder="https://portfolio-anda.com">
+          <small class="hint">Format harus diawali https:// (contoh: Google Drive, Notion, Behance, GitHub, website pribadi)</small>
+          <small class="field-error" id="portfolioError">Link Portfolio tidak valid. Contoh yang benar: https://portfolio-anda.com</small>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Simpan Data</button>
+        <div class="status-msg" id="statusMsg"></div>
+      </form>
+    </div>
+  </section>
+
+</div>
+
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="groupSheet" role="dialog" aria-label="Filter Small Group">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h3 class="sheet-title">Small Group</h3>
+    <button type="button" class="sheet-close" id="sheetClose">Tutup</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<footer>Made by <br><a href="https://www.instagram.com/assistby.rjw/" target="_blank">assistby.rjw</a></footer>
+
+<script>
+/* =========================================================
+   ========================================================= */
+const _k = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6SmVTdy01U0o5X1huVDFYMTI3MHRnVnJKSHZsd3ozaUgyUGtfTnloR0tsbEU4YzFkMlBSQURPeS05YVdVTC16eFZFdy9leGVj";
+const _ep = atob(_k);
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+/* ---------------- Validasi format link ---------------- */
+const instagramInput = document.getElementById("instagram");
+const linkedinInput = document.getElementById("linkedin");
+const instagramError = document.getElementById("instagramError");
+const linkedinError = document.getElementById("linkedinError");
+const portfolioInput = document.getElementById("portfolio");
+const portfolioError = document.getElementById("portfolioError");
+const smallGroupInput = document.getElementById("smallGroup");
+const smallGroupError = document.getElementById("smallGroupError");
+
+// Harus format: https://instagram.com/username atau https://www.instagram.com/username
+const INSTAGRAM_REGEX = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]{1,30}\/?$/;
+// Harus format: https://linkedin.com/in/username atau https://www.linkedin.com/in/username
+const LINKEDIN_REGEX = /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-_%]{3,100}\/?$/;
+// Portfolio bebas platform, yang penting link http(s) dengan domain yang valid
+const PORTFOLIO_REGEX = /^https?:\/\/[^\s\/$.?#][^\s]*\.[^\s]{2,}$/i;
+
+function setFieldError(input, errorEl, isInvalid){
+  input.classList.toggle("invalid", isInvalid);
+  errorEl.classList.toggle("show", isInvalid);
+}
+
+// 
+function validateInstagram(){
+  const val = instagramInput.value.trim();
+  const invalid = val !== "" && !INSTAGRAM_REGEX.test(val);
+  setFieldError(instagramInput, instagramError, invalid);
+  return !invalid;
+}
+function validateLinkedin(){
+  const val = linkedinInput.value.trim();
+  const invalid = val !== "" && !LINKEDIN_REGEX.test(val);
+  setFieldError(linkedinInput, linkedinError, invalid);
+  return !invalid;
+}
+function validatePortfolio(){
+  const val = portfolioInput.value.trim();
+  const invalid = val !== "" && !PORTFOLIO_REGEX.test(val);
+  setFieldError(portfolioInput, portfolioError, invalid);
+  return !invalid;
+}
+function validateSmallGroup(){
+  const val = smallGroupInput.value.trim();
+  const invalid = val === "";
+  setFieldError(smallGroupInput, smallGroupError, invalid);
+  return !invalid;
+}
+
+// 
+instagramInput.addEventListener("blur", validateInstagram);
+linkedinInput.addEventListener("blur", validateLinkedin);
+portfolioInput.addEventListener("blur", validatePortfolio);
+smallGroupInput.addEventListener("change", validateSmallGroup);
+smallGroupInput.addEventListener("blur", validateSmallGroup);
+
+/* ---------------- Submit form ---------------- */
+const form = document.getElementById("studentForm");
+const submitBtn = document.getElementById("submitBtn");
+const statusMsg = document.getElementById("statusMsg");
+
+form.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  statusMsg.className = "status-msg";
+
+  // 
+  const sgOk = validateSmallGroup();
+  const igOk = validateInstagram();
+  const liOk = validateLinkedin();
+  const pfOk = validatePortfolio();
+  if(!sgOk){
+    statusMsg.textContent = "SMALL GROUP WAJIB DI ISI !!!, Tanyakan SA Anda jika belum tahu Small Group Berapa";
+    statusMsg.className = "status-msg err";
+    smallGroupInput.focus();
+    return;
+  }
+  if(!igOk || !liOk || !pfOk){
+    statusMsg.textContent = "Ada format link yang belum sesuai. Perbaiki dulu link yang ditandai merah di atas.";
+    statusMsg.className = "status-msg err";
+    if(!igOk) instagramInput.focus();
+    else if(!liOk) linkedinInput.focus();
+    else portfolioInput.focus();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Menyimpan…";
+
+  const payload = {
+    nama: document.getElementById("nama").value.trim(),
+    batch: document.getElementById("batch").value.trim(),
+    instagram: document.getElementById("instagram").value.trim(),
+    linkedin: document.getElementById("linkedin").value.trim(),
+    portfolio: portfolioInput.value.trim(),
+    smallGroup: document.getElementById("smallGroup").value.trim()
+  };
+
+  try{
+    const res = await fetch(_ep, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // hindari preflight
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.status === "success"){
+      statusMsg.textContent = data.updated
+        ? "Data dengan nama & batch yang sama sudah ada — data berhasil diperbarui. Cek halaman Home!"
+        : "Data berhasil disimpan. Cek halaman Home!";
+      statusMsg.className = "status-msg ok";
+      form.reset();
+      setFieldError(instagramInput, instagramError, false);
+      setFieldError(linkedinInput, linkedinError, false);
+      setFieldError(portfolioInput, portfolioError, false);
+      setFieldError(smallGroupInput, smallGroupError, false);
+      loadRoster();
+    } else {
+      throw new Error(data.message || "Gagal menyimpan");
+    }
+  }catch(err){
+    statusMsg.textContent = "Gagal menyimpan data: " + err.message;
+    statusMsg.className = "status-msg err";
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Simpan Data";
+  }
+});
+
+/* ---------------- Load roster (Home) ---------------- */
+const grid = document.getElementById("grid");
+const rosterCount = document.getElementById("rosterCount");
+const groupSidebar = document.getElementById("groupSidebar");
+const searchBox = document.getElementById("searchBox");
+let allStudents = [];
+let activeGroup = ""; // "" = Semua
+
+function initial(name){
+  return (name||"?").trim().charAt(0).toUpperCase();
+}
+
+/* Ambil nilai field dari objek data walau nama kolom di sheet
+   sedikit berbeda (huruf besar/kecil, ada spasi, underscore, dll).
+   Ini supaya kode tidak gampang "buta" hanya karena header sheet
+   ditulis beda dari yang diharapkan JS. */
+function pickField(obj, names){
+  for(const n of names){
+    if(obj[n] !== undefined && obj[n] !== null && String(obj[n]).trim() !== ""){
+      return String(obj[n]).trim();
+    }
+  }
+  const target = names[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  for(const key of Object.keys(obj)){
+    const normKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if(normKey === target && obj[key] !== undefined && obj[key] !== null){
+      return String(obj[key]).trim();
+    }
+  }
+  return "";
+}
+function getNama(s){ return pickField(s, ["Nama","nama","Name","name"]); }
+function getBatch(s){ return pickField(s, ["Batch","batch"]); }
+function getSmallGroup(s){
+  const val = pickField(s, ["SmallGroup","Small Group","smallGroup","small_group","Small_Group"]);
+  if(val) return val;
+  // Fallback: di data sumbernya, jawaban Small Group kadang "geser" ke kolom lain
+  // (header tidak sinkron dengan posisi jawaban di Sheet). Cari nilai apa pun di baris
+  // ini yang polanya cocok dengan "Small Group - ..." / "Student Advisor", supaya tetap
+  // kebaca walau lokasinya pindah kolom.
+  for(const key of Object.keys(s)){
+    const v = s[key];
+    if(typeof v === "string" && /^small\s*group/i.test(v.trim())){
+      return v.trim();
+    }
+  }
+  return "";
+}
+function getInstagram(s){ return pickField(s, ["Instagram","instagram"]); }
+function getLinkedIn(s){ return pickField(s, ["LinkedIn","Linkedin","linkedin"]); }
+function getPortfolio(s){
+  const url = pickField(s, ["Portfolio","portfolio"]);
+  return /^https?:\/\//i.test(url) ? url : ""; // hanya render link http(s)
+}
+
+function renderRoster(list, searchQuery){
+  if(!list.length){
+    const msg = searchQuery
+      ? `Tidak ditemukan hasil untuk "${escapeHtml(searchQuery)}". Coba kata kunci lain.`
+      : `Belum ada data. Jadilah yang pertama isi lewat tab "Daftar Data".`;
+    grid.innerHTML = `<div class="empty-state">${msg}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(s=>{
+    const nama = getNama(s);
+    const batch = getBatch(s);
+    const smallGroup = getSmallGroup(s);
+    const instagram = getInstagram(s);
+    const linkedin = getLinkedIn(s);
+    const portfolio = getPortfolio(s);
+    return `
+    <div class="card">
+      <div class="card-avatar">${initial(nama)}</div>
+      <div class="card-main">
+        <p class="card-name">${escapeHtml(nama || "-")}</p>
+        <span class="card-batch">${escapeHtml(batch || "-")}</span>
+        ${smallGroup ? `<span class="card-batch" style="background:var(--teal);color:var(--paper);margin-left:6px;">${escapeHtml(smallGroup)}</span>` : ""}
+      </div>
+      <div class="card-links">
+        ${instagram ? `<a class="social-btn ig" href="${instagram}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor"/></svg>Instagram</a>` : ""}
+        ${linkedin ? `<a class="social-btn li" href="${linkedin}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="3" fill="currentColor" fill-opacity="0"/><path d="M6.94 8.5a1.94 1.94 0 1 0 0-3.88 1.94 1.94 0 0 0 0 3.88Z" fill="currentColor"/><path d="M4.75 10.25h4.38V19H4.75v-8.75ZM12.06 10.25h4.2v1.2h.06c.58-1.05 2-2.16 4.12-2.16 4.4 0 5.22 2.75 5.22 6.33V19h-4.38v-4.9c0-1.17-.02-2.68-1.68-2.68-1.69 0-1.95 1.28-1.95 2.6V19h-4.38v-8.75Z" fill="currentColor"/></svg>LinkedIn</a>` : ""}
+        ${portfolio ? `<a class="social-btn pf" href="${escapeHtml(portfolio)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2"/><path d="M3 12.5h18" stroke="currentColor" stroke-width="2"/></svg>Portfolio</a>` : ""}
+      </div>
+    </div>
+  `;}).join("");
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* Terapkan filter search + filter Small Group sekaligus */
+function applyFilters(){
+  const q = searchBox.value.trim().toLowerCase();
+  const filtered = allStudents.filter(s=>{
+    const matchSearch = !q
+      || getNama(s).toLowerCase().includes(q)
+      || getBatch(s).toLowerCase().includes(q)
+      || getSmallGroup(s).toLowerCase().includes(q);
+    const matchGroup = !activeGroup || getSmallGroup(s) === activeGroup;
+    return matchSearch && matchGroup;
+  });
+  renderRoster(filtered, searchBox.value.trim());
+}
+
+/* Bangun tombol Small Group di sidebar berdasarkan data yang ada */
+function buildGroupSidebar(){
+  const groups = [...new Set(
+    allStudents.map(s => getSmallGroup(s)).filter(Boolean)
+  )].sort();
+
+  // Buang tombol lama (kecuali tombol "Semua" yang pertama)
+  groupSidebar.querySelectorAll(".group-btn:not([data-group=''])").forEach(b => b.remove());
+
+  groups.forEach(g=>{
+    const btn = document.createElement("button");
+    btn.className = "group-btn";
+    btn.dataset.group = g;
+    btn.textContent = g;
+    groupSidebar.appendChild(btn);
+  });
+
+  // )
+  groupSidebar.querySelectorAll(".group-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.group === activeGroup);
+  });
+}
+
+/* Pilih Small Group (dipakai sidebar desktop & bottom sheet mobile) */
+const filterBtn = document.getElementById("filterBtn");
+const filterLabel = document.getElementById("filterLabel");
+const sheetBody = document.getElementById("sheetBody");
+
+function setActiveGroup(g){
+  activeGroup = g;
+  document.querySelectorAll(".group-btn, .sheet-chip").forEach(b=>{
+    b.classList.toggle("active", b.dataset.group === activeGroup);
+  });
+  filterBtn.classList.toggle("on", !!activeGroup);
+  filterLabel.textContent = activeGroup ? activeGroup.replace(/^Small Group\s*-\s*/i, "") : "Filter";
+  applyFilters();
+}
+
+groupSidebar.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".group-btn");
+  if(!btn) return;
+  setActiveGroup(btn.dataset.group);
+});
+
+/* Bottom sheet: Small Group dikelompokkan per nama (Alfred 1-4, April 1-4, dst) */
+function buildGroupSheet(){
+  const groups = [...new Set(
+    allStudents.map(s => getSmallGroup(s)).filter(Boolean)
+  )].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+
+  const byName = {};
+  groups.forEach(g=>{
+    const m = g.replace(/^Small Group\s*-\s*/i, "").match(/^(.*?)\s+(\d+)$/);
+    const name = m ? m[1] : "Lainnya";
+    const label = m ? m[2] : g;
+    (byName[name] = byName[name] || []).push({g, label});
+  });
+
+  const chip = (g, label) =>
+    `<button type="button" class="sheet-chip${g===activeGroup?" active":""}" data-group="${escapeHtml(g)}">${escapeHtml(label)}</button>`;
+
+  sheetBody.innerHTML =
+    `<div class="sheet-row"><div class="sheet-chips">${chip("", "Semua student")}</div></div>` +
+    Object.keys(byName).map(name =>
+      `<div class="sheet-row"><div class="sheet-name">${escapeHtml(name)}</div><div class="sheet-chips">${
+        byName[name].map(x => chip(x.g, x.label)).join("")
+      }</div></div>`
+    ).join("");
+}
+
+function openSheet(){ document.body.classList.add("sheet-open"); }
+function closeSheet(){ document.body.classList.remove("sheet-open"); }
+filterBtn.addEventListener("click", openSheet);
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("sheetOverlay").addEventListener("click", closeSheet);
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") closeSheet(); });
+sheetBody.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".sheet-chip");
+  if(!btn) return;
+  setActiveGroup(btn.dataset.group);
+  closeSheet();
+});
+
+async function loadRoster(){
+  rosterCount.textContent = "Memuat data…";
+  try{
+    const res = await fetch(_ep);
+    const data = await res.json();
+    allStudents = Array.isArray(data) ? data : [];
+    rosterCount.textContent = `${allStudents.length} student terdaftar`;
+    buildGroupSidebar();
+    buildGroupSheet();
+    applyFilters();
+  }catch(err){
+    rosterCount.textContent = "Gagal memuat data";
+    grid.innerHTML = `<div class="empty-state">Tidak bisa memuat data. Pastikan endpoint sudah dikonfigurasi.</div>`;
+  }
+}
+
+searchBox.addEventListener("input", applyFilters);
+
+loadRoster();
+
+/* ---------------- Auto-refresh ---------------- */
+// 
+const AUTO_REFRESH_MS = 20000;
+setInterval(loadRoster, AUTO_REFRESH_MS);
+
+//
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible"){
+    loadRoster();
+  }
+});
+</script>
+</body>
+</html>
